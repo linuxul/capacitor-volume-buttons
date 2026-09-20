@@ -13,9 +13,9 @@ public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "VolumeButtonsPlugin"
     public let jsName = "VolumeButtons"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "isWatching", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "watchVolume", returnType: CAPPluginReturnCallback),
-        CAPPluginMethod(name: "clearWatch", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "isWatching", returnType: .promise),
+        CAPPluginMethod(name: "watchVolume", returnType: .callback),
+        CAPPluginMethod(name: "clearWatch", returnType: .promise)
     ]
 
     private var savedCallID: String?
