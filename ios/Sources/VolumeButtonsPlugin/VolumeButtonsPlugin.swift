@@ -12,10 +12,12 @@ import MediaPlayer
 public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "VolumeButtonsPlugin"
     public let jsName = "VolumeButtons"
+    // The methods stay synchronous: watchVolume keeps its call alive, and the bridge queue keeps watchVolume and
+    // clearWatch in the order of the calls.
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "isWatching", returnType: .promise),
-        CAPPluginMethod(name: "watchVolume", returnType: .callback),
-        CAPPluginMethod(name: "clearWatch", returnType: .promise)
+        .promise("isWatching", VolumeButtonsPlugin.isWatching),
+        .callback("watchVolume", VolumeButtonsPlugin.watchVolume),
+        .promise("clearWatch", VolumeButtonsPlugin.clearWatch)
     ]
 
     private var savedCallID: String?
@@ -25,11 +27,10 @@ public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
         volumeHandler = VolumeButtonsHandler()
     }
 
-    @objc func isWatching(_ call: CAPPluginCall) {
+    func isWatching(_ call: CAPPluginCall) throws {
 
         guard volumeHandler != nil else {
-            call.reject("Volume handler has not been initialized yet")
-            return
+            throw CAPPluginError("Volume handler has not been initialized yet")
         }
 
         call.resolve([
@@ -37,11 +38,10 @@ public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
         ])
     }
 
-    @objc func watchVolume(_ call: CAPPluginCall) {
+    func watchVolume(_ call: CAPPluginCall) throws {
 
         guard !volumeHandler.isStarted else {
-            call.reject("Volume buttons has already been watched")
-            return
+            throw CAPPluginError("Volume buttons has already been watched")
         }
 
         let disableSystemVolumeHandler = call.getBool("disableSystemVolumeHandler", false)
@@ -51,8 +51,8 @@ public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
 
         volumeHandler.startHandler(disableSystemVolumeHandler)
 
-        let handlerBlock: VolumeButtonBlock = { direction in
-            if let id = self.savedCallID, let savedCall = self.bridge?.savedCall(withID: id) {
+        let handlerBlock: VolumeButtonBlock = { [weak self] direction in
+            if let self, let id = self.savedCallID, let savedCall = self.bridge?.savedCall(withID: id) {
                 var jsObject = JSObject()
                 jsObject["direction"] = direction
                 savedCall.resolve(jsObject)
@@ -62,11 +62,10 @@ public class VolumeButtonsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     }
 
-    @objc func clearWatch(_ call: CAPPluginCall) {
+    func clearWatch(_ call: CAPPluginCall) throws {
 
         guard volumeHandler.isStarted else {
-            call.reject("Volume buttons has not been been watched")
-            return
+            throw CAPPluginError("Volume buttons has not been been watched")
         }
 
         if let id = savedCallID {
