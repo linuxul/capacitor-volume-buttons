@@ -18,6 +18,7 @@ import android.view.KeyEvent
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
+import com.getcapacitor.PluginException
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
@@ -38,8 +39,7 @@ public class VolumeButtonsPlugin : Plugin() {
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
     public fun watchVolume(call: PluginCall) {
         if (isStarted) {
-            call.reject("Volume buttons has already been watched")
-            return
+            throw PluginException("Volume buttons has already been watched")
         }
 
         suppressVolumeIndicator = call.getBoolean("suppressVolumeIndicator", true) == true
@@ -72,8 +72,7 @@ public class VolumeButtonsPlugin : Plugin() {
     @PluginMethod(returnType = PluginMethod.RETURN_PROMISE)
     public fun clearWatch(call: PluginCall) {
         if (!isStarted) {
-            call.reject("Volume buttons has not been been watched")
-            return
+            throw PluginException("Volume buttons has not been been watched")
         }
 
         bridge.webView.setOnKeyListener(null)
